@@ -17,15 +17,10 @@ import (
 
 const revokeEndpointFmt = "https://accounts.google.com/o/oauth2/revoke?token=%s"
 
-/*
-func StaticServer(w http.ResponseWriter, req *http.Request) {
-	path := req.URL.Query().Get(":path")
-	if strings.ContainsAny(path, "/\\") {
-		return
-	}
-	http.ServeFile(w, req, "static/"+path)
+
+func ExampleServer(w http.ResponseWriter, req *http.Request) {
+	http.ServeFile(w, req, "playground_glass.html")
 }
-*/
 
 type PlaygroundTemplate struct {
 	WSUrl     string
@@ -248,6 +243,7 @@ func main() {
 	m.Get("/signout", http.HandlerFunc(signoutHandler))
 	m.Post("/signout", http.HandlerFunc(signoutHandler))
 	m.Post("/signature", http.HandlerFunc(SignatureVerifyHandler))
+	m.Get("/example", ExampleServer)
 	http.Handle("/ws", websocket.Handler(WSHandler))
 	http.Handle("/ws/", websocket.Handler(WSHandler))
 	m.Get("/", noDirListing(http.FileServer(http.Dir("dist"))))

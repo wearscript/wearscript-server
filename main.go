@@ -62,7 +62,7 @@ func PlaygroundServer(w http.ResponseWriter, req *http.Request) {
 			LogPrintf("playground: template parse")
 			return
 		}
-		glassBody, err = ioutil.ReadFile("static/playground_glass.html")
+		glassBody, err = ioutil.ReadFile("playground_glass.html")
 		if err != nil {
 			w.WriteHeader(500)
 			LogPrintf("playground: glass")

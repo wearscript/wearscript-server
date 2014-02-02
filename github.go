@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"github.com/OpenShades/wearscript-go/wearscript"
 )
 
 func AuthHandlerGH(w http.ResponseWriter, r *http.Request) {
@@ -79,49 +80,33 @@ func githubConvertFiles(filesRaw map[interface{}]interface{}) map[string]map[str
 
 }
 
-func GithubGistHandle(userId string, request []interface{}) *[]interface{} {
-	action := string(request[0].([]uint8))
-	if action == "gist_list" {
-		dataJS, err := GithubGetGists(userId)
-		if err != nil {
-			return nil
-		} else {
-			return &[]interface{}{[]uint8("gist_list_result"), dataJS}
-		}
-	} else if action == "gist_get" {
-		dataJS, err := GithubGetGist(userId, string(request[1].([]uint8)))
-		if err != nil {
-			return nil
-		} else {
-			return &[]interface{}{[]uint8("gist_get_result"), dataJS}
-		}
-	} else if action == "gist_create" {
-		
-		dataJS, err := GithubCreateGist(userId, request[1].(bool), string(request[2].([]uint8)), string(request[3].([]uint8)), githubConvertFiles(request[4].(map[interface{}]interface{})))
-		if err != nil {
-			return nil
-		} else {
-			return &[]interface{}{[]uint8("gist_create_result"), dataJS}
-		}
-	} else if action == "gist_modify" {
-		dataJS, err := GithubModifyGist(userId, string(request[1].([]uint8)), string(request[2].([]uint8)), string(request[3].([]uint8)), githubConvertFiles(request[4].(map[interface{}]interface{})))
-		if err != nil {
-			return nil
-		} else {
-			return &[]interface{}{[]uint8("gist_create_result"), dataJS}
-		}
-	} else if action == "gist_fork" {
-		dataJS, err := GithubForkGist(userId, string(request[1].([]uint8)))
-		if err != nil {
-			return nil
-		} else {
-			return &[]interface{}{[]uint8("gist_fork_result"), dataJS}
-		}
+func GithubGistHandle(cm *wearscript.ConnectionManager, userId string, request []interface{}) {
+	action := request[1].(string)
+	channelResult := request[2].(string)
+	var dataJS interface{}
+	var err error
+	if action == "list" {
+		dataJS, err = GithubGetGists(userId)
+	} else if action == "get" {
+		dataJS, err = GithubGetGist(userId, request[3].(string))
+	} else if action == "create" {
+		dataJS, err = GithubCreateGist(userId, request[3].(bool), request[4].(string), request[5].(string), githubConvertFiles(request[6].(map[interface{}]interface{})))
+	} else if action == "modify" {
+		dataJS, err = GithubModifyGist(userId, request[3].(string), request[4].(string), request[5].(string), githubConvertFiles(request[6].(map[interface{}]interface{})))
+	} else if action == "fork" {
+		dataJS, err = GithubForkGist(userId, request[3].(string))
+	} else {
+		return
 	}
-	return nil
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(dataJS)
+	cm.Publish(channelResult, dataJS)
 }
 
-func GithubGetGists(userId string) ([]byte, error) {
+func GithubGetGists(userId string) (interface{}, error) {
 	values := url.Values{}
 	accessToken, err := getUserAttribute(userId, "oauth_token_gh")
 	if err != nil {
@@ -142,8 +127,7 @@ func GithubGetGists(userId string) ([]byte, error) {
 			datasKeep = append(datasKeep, v)
 		}
 	}
-	fmt.Println(datasKeep)
-	return json.Marshal(datasKeep)
+	return datasKeep, nil
 }
 
 func githubCheckDescription(gist map[string]interface{}) bool {
@@ -151,7 +135,7 @@ func githubCheckDescription(gist map[string]interface{}) bool {
 	return ok && strings.HasPrefix(vs, "[wearscript]")
 }
 
-func GithubGetGist(userId string, gistId string) ([]byte, error) {
+func GithubGetGist(userId string, gistId string) (map[string]interface{}, error) {
 	values := url.Values{}
 	accessToken, err := getUserAttribute(userId, "oauth_token_gh")
 	if err != nil {
@@ -170,21 +154,24 @@ func GithubGetGist(userId string, gistId string) ([]byte, error) {
 	if response.StatusCode != 200 {
 		return nil, errors.New(fmt.Sprintf("Bad status[%d][%s]", response.StatusCode, body))
 	}
-	return body, nil
+	datas := map[string]interface{}{}
+	err = json.Unmarshal(body, &datas)
+	if err != nil {
+		return nil, err
+	}
+	return datas, nil
 }
 
 func GithubCheckGist(userId string, gistId string) bool {
-	dataJS, err := GithubGetGist(userId, gistId)
+	data, err := GithubGetGist(userId, gistId)
 	if err != nil {
 		LogPrintf("github: check gist")
 		return false
 	}
-	data := map[string]interface{}{}
-	err = json.Unmarshal(dataJS, &data)
 	return githubCheckDescription(data)
 }
 
-func GithubCreateGist(userId string, public bool, name string, description string, files map[string]map[string]string) ([]byte, error) {
+func GithubCreateGist(userId string, public bool, name string, description string, files map[string]map[string]string) (interface{}, error) {
 	accessToken, err := getUserAttribute(userId, "oauth_token_gh")
 	if err != nil {
 		return nil, err
@@ -216,10 +203,15 @@ func GithubCreateGist(userId string, public bool, name string, description strin
 	if response.StatusCode != 201 {
 		return nil, errors.New(fmt.Sprintf("Bad status[%d][%s]", response.StatusCode, body))
 	}
-	return body, nil
+	datas := map[string]interface{}{}
+	err = json.Unmarshal(body, &datas)
+	if err != nil {
+		return nil, err
+	}
+	return datas, nil
 }
 
-func GithubModifyGist(userId string, gistId string, name string, description string, files map[string]map[string]string) ([]byte, error) {
+func GithubModifyGist(userId string, gistId string, name string, description string, files map[string]map[string]string) (interface{}, error) {
 	if !GithubCheckGist(userId, gistId) {
 		return nil, errors.New("GithubCheckGist failed")
 	}
@@ -253,10 +245,15 @@ func GithubModifyGist(userId string, gistId string, name string, description str
 	if response.StatusCode != 200 {
 		return nil, errors.New(fmt.Sprintf("Bad status[%d][%s]", response.StatusCode, body))
 	}
-	return body, nil
+	datas := map[string]interface{}{}
+	err = json.Unmarshal(body, &datas)
+	if err != nil {
+		return nil, err
+	}
+	return datas, nil
 }
 
-func GithubForkGist(userId string, gistId string) ([]byte, error) {
+func GithubForkGist(userId string, gistId string) (interface{}, error) {
 	if !GithubCheckGist(userId, gistId) {
 		return nil, errors.New("GithubCheckGist failed")
 	}
@@ -288,5 +285,10 @@ func GithubForkGist(userId string, gistId string) ([]byte, error) {
 	if response.StatusCode != 201 {
 		return nil, errors.New(fmt.Sprintf("Bad status[%d][%s]", response.StatusCode, body))
 	}
-	return body, nil
+	datas := map[string]interface{}{}
+	err = json.Unmarshal(body, &datas)
+	if err != nil {
+		return nil, err
+	}
+	return datas, nil
 }

@@ -92,7 +92,7 @@ func GithubGistHandle(cm *wearscript.ConnectionManager, userId string, request [
 	} else if action == "create" {
 		dataJS, err = GithubCreateGist(userId, request[3].(bool), request[4].(string), request[5].(string), githubConvertFiles(request[6].(map[interface{}]interface{})))
 	} else if action == "modify" {
-		dataJS, err = GithubModifyGist(userId, request[3].(string), request[4].(string), request[5].(string), githubConvertFiles(request[6].(map[interface{}]interface{})))
+		dataJS, err = GithubModifyGist(userId, request[3].(string), request[4], githubConvertFiles(request[5].(map[interface{}]interface{})))
 	} else if action == "fork" {
 		dataJS, err = GithubForkGist(userId, request[3].(string))
 	} else {
@@ -211,7 +211,7 @@ func GithubCreateGist(userId string, public bool, name string, description strin
 	return datas, nil
 }
 
-func GithubModifyGist(userId string, gistId string, name string, description string, files map[string]map[string]string) (interface{}, error) {
+func GithubModifyGist(userId string, gistId string, description interface{}, files map[string]map[string]string) (interface{}, error) {
 	if !GithubCheckGist(userId, gistId) {
 		return nil, errors.New("GithubCheckGist failed")
 	}
@@ -222,7 +222,10 @@ func GithubModifyGist(userId string, gistId string, name string, description str
 	values := url.Values{}
 	values.Set("access_token", accessToken)
 	data := map[string]interface{}{}
-	data["description"] = fmt.Sprintf("[wearscript][%s] %s", name, description)
+	descriptionStr, ok := description.(string)
+	if ok {
+		data["description"] = descriptionStr
+	}
 	data["files"] = files
 	datajs, err := json.Marshal(data)
 	if err != nil {

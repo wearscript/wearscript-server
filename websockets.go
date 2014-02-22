@@ -43,12 +43,14 @@ func WSHandler(ws *websocket.Conn) {
 		//WSSend(c, &[]interface{}{[]uint8("error"), []uint8("Unable to create mirror transport")})
 		return
 	}
+	// TODO(brandyn): Add lock here when adding users
 	if Managers[userId] == nil {
 		Managers[userId], err = wearscript.ConnectionManagerFactory("server", "0")
 		if err != nil {
 			LogPrintf("ws: cm")
 			return
 		}
+		Managers[userId].SubscribeTestHandler()
 	}
 	cm := Managers[userId]
 	_, err = cm.NewConnection(ws) // con

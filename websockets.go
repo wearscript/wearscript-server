@@ -53,7 +53,7 @@ func WSHandler(ws *websocket.Conn) {
 		Managers[userId].SubscribeTestHandler()
 	}
 	cm := Managers[userId]
-	_, err = cm.NewConnection(ws) // con
+	conn, err := cm.NewConnection(ws) // con
 	if err != nil {
 		fmt.Println("Failed to create conn")
 		return
@@ -61,8 +61,5 @@ func WSHandler(ws *websocket.Conn) {
 	cm.Subscribe("gist", func(channel string, dataRaw []byte, data []interface{}) {
 		GithubGistHandle(cm, userId, data)
 	})
-	for {
-		// TODO: Do something smarter
-		time.Sleep(time.Second * 1)
-	}
+	cm.HandlerLoop(conn)
 }

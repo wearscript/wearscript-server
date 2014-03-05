@@ -13,6 +13,9 @@ function cb(data) {
         ctx.fillRect(0, 0, 640, 360);
     }
 }
+function onEyeGesture(name) {
+    WS.log('onEyeGesture: ' + name);
+}
 function onGesture(name) {
     WS.log('onGesture: ' + name);
 }
@@ -36,13 +39,21 @@ function server() {
                    'light', 'gravity', 'linearAcceleration', 'rotationVector'];
     for (var i = 0; i < sensors.length; i++)
         WS.sensorOn(WS.sensor(sensors[i]), .15, 'cb');
-    WS.cameraOn(2);
+    WS.cameraOn(.25);
     WS.dataLog(false, true, .15);
-    var gestures = ['onGesture', 'onFingerCountChanged', 'onScroll', 'onTwoFingerScroll'];
+    var gestures = ['onGesture', 'onFingerCountChanged', 'onScroll', 'onTwoFingerScroll', 'onEyeGesture'];
     for (var i = 0; i < gestures.length; i++)
         WS.gestureCallback(gestures[i], gestures[i]);
     WS.liveCardCreate(false, .2);
     WS.sound('SUCCESS')
+    // Below this are simple examples, uncomment to use them
+    /*
+    var tree = new WS.Cards();
+    tree.add('Body text', 'Footer text', function () {WS.say('selected')}, function () {WS.say('tapped')}, 'Menu0', function () {WS.say('menu0')}, 'Menu1', function () {WS.say('menu1')});
+    tree.add('Body text', 'Footer text', (new WS.Cards()).add('Child0', '0').add('Child1', '1'));
+    WS.cardTree(tree);
+    WS.displayCardTree();
+    */
     //WS.speechRecognize('Say Something', 'speech');
     //WS.cameraPhoto();
     //WS.cameraVideo();

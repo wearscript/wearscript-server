@@ -119,9 +119,15 @@ func GithubGetGists(userId string) (interface{}, error) {
 	}
 	defer r.Body.Close()
 	data, err := ioutil.ReadAll(r.Body)
+	if r.StatusCode != 200 {
+		return "error:status:" + strconv.Itoa(r.StatusCode), errors.New(fmt.Sprintf("Bad status[%d][%s]", r.StatusCode, data))
+	}
 	datas := []map[string]interface{}{}
 	datasKeep := []map[string]interface{}{}
 	err = json.Unmarshal(data, &datas)
+	if err != nil {
+		return "error:json", err
+	}
 	for _, v := range datas {
 		if githubCheckDescription(v) {
 			datasKeep = append(datasKeep, v)

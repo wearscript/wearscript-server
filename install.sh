@@ -5,5 +5,5 @@ go get -v -u github.com/garyburd/redigo/redis
 go get -v -u github.com/gorilla/pat
 go get -v -u github.com/gorilla/sessions
 go get -v -u github.com/ugorji/go/codec
-go get -v -u github.com/OpenShades/wearscript-go/wearscript
+go get -v -u github.com/wearscript/wearscript-go/wearscript
 go build

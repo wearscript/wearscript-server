@@ -1,52 +1,52 @@
 <html style="width:100%; height:100%; overflow:hidden">
 <head>
+<!-- You can include external scripts here like so... -->
 <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.0/zepto.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>-->
 </head>
 <body style="width:100%; height:100%; overflow:hidden; margin:0">
 <canvas id="canvas" width="640" height="360" style="display:block"></canvas>
 <script>
-function cb(data) {
-    // Changes canvas color with head rotation
-    if (data['type'] == WS.sensor('orientation')) {
-        ctx.fillStyle = 'hsl(' + data['values'][0] + ', 90%, 50%)'
-        ctx.fillRect(0, 0, 640, 360);
-    }
-}
-function onEyeGesture(name) {
-    WS.log('onEyeGesture: ' + name);
-}
-function onGesture(name) {
-    WS.log('onGesture: ' + name);
-}
-function onFingerCountChanged(i, i2) {
-    WS.log('onFingerCountChanged: ' + i + ', ' + i2);
-}
-function onScroll(v, v2, v3) {
-    WS.log('onScroll: ' + v + ', ' + v2 + ', ' + v3);
-}
-function onTwoFingerScroll(v, v2, v3) {
-    WS.log('onTwoFingerScroll: ' + v + ', ' + v2 + ', ' + v3);
-}
-function speech(data) {
-    WS.log('speech: ' + data);
-    WS.say('you said ' + data);
-}
 function server() {
     WS.log('Welcome to WearScript');
     WS.say('Welcome to WearScript');
-    var sensors = ['gps', 'accelerometer', 'magneticField', 'orientation', 'gyroscope',
+    WS.sound('SUCCESS')
+
+    // Changes canvas color with head rotation
+    WS.sensorOn('orientation', .15, function (data) {
+        ctx.fillStyle = 'hsl(' + data['values'][0] + ', 90%, 50%)'
+        ctx.fillRect(0, 0, 640, 360);
+    });
+
+    // Stream several sensors (can view in the Sensors tab)
+    var sensors = ['gps', 'accelerometer', 'magneticField', 'gyroscope',
                    'light', 'gravity', 'linearAcceleration', 'rotationVector'];
     for (var i = 0; i < sensors.length; i++)
-        WS.sensorOn(WS.sensor(sensors[i]), .15, 'cb');
+        WS.sensorOn(sensors[i], .15);
+
+    // Stream camera frames (can view in the Images tab)
     WS.cameraOn(.25);
     WS.dataLog(false, true, .15);
-    var gestures = ['onGesture', 'onFingerCountChanged', 'onScroll', 'onTwoFingerScroll', 'onEyeGesture'];
-    for (var i = 0; i < gestures.length; i++)
-        WS.gestureCallback(gestures[i], gestures[i]);
-    WS.liveCardCreate(false, .2);
-    WS.sound('SUCCESS')
-    // Below this are simple examples, uncomment to use them
+    
+    // Hookup touch and eye gesture callbacks
+    WS.gestureCallback('onTwoFingerScroll', function (v, v2, v3) {
+        WS.log('onTwoFingerScroll: ' + v + ', ' + v2 + ', ' + v3);
+    });
+    WS.gestureCallback('onEyeGesture', function (name) {
+        WS.log('onEyeGesture: ' + name);
+    });
+    WS.gestureCallback('onGesture', function (name) {
+        WS.log('onGesture: ' + name);
+    });
+    WS.gestureCallback('onFingerCountChanged', function (i, i2) {
+        WS.log('onFingerCountChanged: ' + i + ', ' + i2);
+    });
+    WS.gestureCallback('onScroll', function (v, v2, v3) {
+        WS.log('onScroll: ' + v + ', ' + v2 + ', ' + v3);
+    });
+
+    // Below this are more examples, uncomment to use them
+    //WS.liveCardCreate(false, .2);
     /*
     var tree = new WS.Cards();
     tree.add('Body text', 'Footer text', function () {WS.say('selected')}, function () {WS.say('tapped')}, 'Menu0', function () {WS.say('menu0')}, 'Menu1', function () {WS.say('menu1')});
@@ -54,7 +54,12 @@ function server() {
     WS.cardTree(tree);
     WS.displayCardTree();
     */
-    //WS.speechRecognize('Say Something', 'speech');
+    /*
+    WS.speechRecognize('Say Something', function (data) {
+        WS.log('speech: ' + data);
+        WS.say('you said ' + data);
+    });
+    */
     //WS.cameraPhoto();
     //WS.cameraVideo();
     //WS.cameraOff();
@@ -63,7 +68,7 @@ function server() {
 function main() {
     if (WS.scriptVersion(1)) return;
     ctx = document.getElementById('canvas').getContext("2d");
-    WS.serverConnect('{{WSUrl}}', 'server');
+    WS.serverConnect('{{WSUrl}}', server);
 }
 window.onload = main;
 </script>

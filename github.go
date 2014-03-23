@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"strconv"
-	"github.com/OpenShades/wearscript-go/wearscript"
+	"github.com/wearscript/wearscript-go/wearscript"
 )
 
 func AuthHandlerGH(w http.ResponseWriter, r *http.Request) {

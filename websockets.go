@@ -3,7 +3,7 @@ package main
 import (
 	"code.google.com/p/go.net/websocket"
 	"code.google.com/p/google-api-go-client/mirror/v1"
-	"github.com/OpenShades/wearscript-go/wearscript"
+	"github.com/wearscript/wearscript-go/wearscript"
 	"fmt"
 	"strings"
 	"time"

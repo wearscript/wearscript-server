@@ -52,7 +52,7 @@ func WSHandler(ws *websocket.Conn) {
 		}
 		Managers[userId].SubscribeTestHandler()
 		Managers[userId].Subscribe("gist", func(channel string, dataRaw []byte, data []interface{}) {
-			GithubGistHandle(cm, userId, data)
+			GithubGistHandle(Managers[userId], userId, data)
 		})
 	}
 	cm := Managers[userId]

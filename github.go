@@ -72,8 +72,11 @@ func githubConvertFiles(filesRaw map[interface{}]interface{}) map[string]map[str
 	for k0, v0 := range filesRaw {
 		fileRaw := v0.(map[interface{}]interface{})
 		file := map[string]string{}
-		for k1, v1 := range fileRaw {
-			file[k1.(string)] = string(v1.([]uint8))
+		if fileRaw["content"] != nil {
+			file["content"] = string(fileRaw["content"].([]uint8))
+		}
+		if fileRaw["filename"] != nil {
+			file["filename"] = string(fileRaw["filename"].([]uint8))
 		}
 		files[k0.(string)] = file
 	}
@@ -144,10 +147,10 @@ func githubCheckDescription(gist map[string]interface{}) bool {
 func GithubGetGist(userId string, gistId string) (interface{}, error) {
 	values := url.Values{}
 	accessToken, err := getUserAttribute(userId, "oauth_token_gh")
-	if err != nil {
-		return "error:oauth", err
+	// NOTE(brandyn): We allow the user to not have an oauth token for getting gists
+	if err == nil {
+		values.Set("access_token", accessToken)
 	}
-	values.Set("access_token", accessToken)
 	response, err := http.Get("https://api.github.com/gists/" + gistId + "?" + values.Encode())
 	if err != nil {
 		return "error:github", err

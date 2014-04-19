@@ -54,6 +54,9 @@ func WSHandler(ws *websocket.Conn) {
 		Managers[userId].Subscribe("gist", func(channel string, dataRaw []byte, data []interface{}) {
 			GithubGistHandle(Managers[userId], userId, data)
 		})
+		Managers[userId].Subscribe("weariverse", func(channel string, dataRaw []byte, data []interface{}) {
+			WeariverseGistHandle(Managers[userId], userId, data)
+		})
 	}
 	cm := Managers[userId]
 	conn, err := cm.NewConnection(ws) // con

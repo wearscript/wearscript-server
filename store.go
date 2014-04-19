@@ -145,6 +145,14 @@ func deleteUserKey(userId string, name string) error {
 	return err
 }
 
+func getUserSortedSet(userId string, name string) ([]string, error) {
+	c, err := getRedisConnection()
+	if err != nil {
+		return nil, err
+	}
+	return redis.Strings(c.Do("ZRANGE", userId+":"+name, "0", "-1"))
+}
+
 func setUserMap(userId string, name string, key string, data string) error {
 	c, err := getRedisConnection()
 	if err != nil {
